@@ -9,7 +9,7 @@ import (
 	"testing"
 	"time"
 
-	"github.com/cespare/asrt"
+	"github.com/cespare/kvcache/internal/github.com/cespare/asrt"
 )
 
 func init() { log.SetOutput(ioutil.Discard) }
@@ -108,7 +108,7 @@ func TestDB(t *testing.T) {
 	}
 
 	// Reopen the DB
-	db, err = OpenDB(50, 10*time.Second, dir)
+	db, _, err = OpenDB(50, 10*time.Second, dir, false)
 	asrt.Equal(t, err, nil)
 	db.now = func() time.Time { return now }
 	db.since = func(t time.Time) time.Duration { return now.Sub(t) }
@@ -157,4 +157,17 @@ func TestDB(t *testing.T) {
 	err = db.Close()
 	asrt.Equal(t, err, nil)
 	asrt.DeepEqual(t, lsDir(dir), files)
+
+	// Intentionally corrupt index 3.
+	err = os.Truncate(filepath.Join(dir, "chunk0000000003.idx"), 50)
+	asrt.Equal(t, err, nil)
+	db, removedChunks, err := OpenDB(50, 10*time.Second, dir, true)
+	asrt.Equal(t, err, nil)
+	asrt.Equal(t, removedChunks, int64(1))
+	files = []string{"chunk0000000001.idx", "chunk0000000001.log", "chunk0000000002.idx", "chunk0000000002.log",
+		"chunk0000000004.idx", "chunk0000000004.log", "chunk0000000005.idx", "chunk0000000005.log"}
+	asrt.DeepEqual(t, lsDir(dir), files)
+	asrt.Equal(t, err, nil)
+	err = db.Close()
+	asrt.Equal(t, err, nil)
 }

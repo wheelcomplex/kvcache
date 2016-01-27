@@ -8,7 +8,7 @@ import (
 	"testing"
 	"time"
 
-	"github.com/garyburd/redigo/redis"
+	"github.com/cespare/kvcache/internal/github.com/garyburd/redigo/redis"
 )
 
 // A small integration test.
@@ -20,7 +20,7 @@ func TestServer(t *testing.T) {
 	defer os.RemoveAll(tempdir)
 	dir := filepath.Join(tempdir, "db")
 
-	server, err := NewServer(dir, "", 1e6, time.Hour, "localhost:8125")
+	server, err := NewServer(dir, "", 1e6, time.Hour, "localhost:8125", false)
 	if err != nil {
 		t.Fatal(err)
 	}
